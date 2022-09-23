@@ -14,7 +14,9 @@ if config['Database_Type'].lower() == 'mongodb':
     DB_NAME = os.getenv("DATABASE_NAME")
     cluster = MongoClient(MONGODB_URI)
     levelling = cluster[COLLECTION][DB_NAME]
-
+async def message(message_id, author, guild_id):
+    levelling.insert_one({"message_id": message_id, "author": author, "guild_id":guild_id}
+                         )
 async def userField(member: discord.Member, guild: discord.Guild):
     db_type = config["Database_Type"]
     if db_type.lower() == "mongodb":
@@ -22,13 +24,9 @@ async def userField(member: discord.Member, guild: discord.Guild):
             {"guild_id": guild.id, "user_id": member.id, "name": str(member), "level": 1, "xp": 0,
              "background": config['Default_Background'], "xp_colour": config['Default_XP_Colour'], "blur": 0,
              "border": config['Default_Border']})
-    elif db_type.lower() == "local":
-        db = sqlite3.connect("KumosLab/Database/Local/userbase.sqlite")
-        cursor = db.cursor()
-        sql = "INSERT INTO levelling (guild_id, user_id, name, level, xp, background, xp_colour, blur, border) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
-        val = (
-        member.guild.id, member.id, str(member), 1, 0, config['Default_Background'], config['Default_XP_Colour'], 0,
-        config['Default_Border'])
-        cursor.execute(sql, val)
-        db.commit()
-        cursor.close()
+async def userFieldSync(member: discord.Member, guild: discord.Guild, xp, level):
+    levelling.insert_one(
+            {"guild_id": guild.id, "user_id": member.id, "name": str(member), "level": level, "xp": xp,
+             "background": config['Default_Background'], "xp_colour": config['Default_XP_Colour'], "blur": 0,
+             "border": config['Default_Border']})
+   

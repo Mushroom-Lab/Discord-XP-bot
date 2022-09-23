@@ -1,6 +1,7 @@
 import os
 import sqlite3
-
+import requests
+import json
 import discord
 from pymongo import MongoClient
 from ruamel import yaml\
@@ -14,9 +15,20 @@ import KumosLab.Database.get
 import KumosLab.Database.set
 import KumosLab.Database.remove
 
+
+CERAMIC_BE = os.getenv("CERAMIC_BE")
+CERAMIC_BE_PORT = os.getenv("CERAMIC_BE_PORT")
+
 with open("Configs/config.yml", "r", encoding="utf-8") as file:
     config = yaml.load(file)
 
+def ceramic_write(user_id, guild_id, level):
+    url = 'http://{}:{}'.format(CERAMIC_BE, CERAMIC_BE_PORT)
+    endpoint = '/ceramic/write_profile'
+    data = {'guild_id': guild_id, "user_id": user_id }
+    r = requests.post(url+endpoint, data=json.dumps(data))
+    return r.json()
+    
 def translate(num):
     num = float('{:.3g}'.format(num))
     magnitude = 0
@@ -42,7 +54,10 @@ async def levelUp(user: discord.Member = None, guild: discord.Guild = None):
                 break
             lvl += 1
         user_xp -= ((config['xp_per_level'] / 2 * ((lvl - 1) ** 2)) + (config['xp_per_level'] / 2 * (lvl - 1)))
+        
         if await KumosLab.Database.get.level(user=user, guild=guild) != lvl:
+            # levelup logic
+            ceramic_write(user.id, guild.id, lvl)
             await KumosLab.Database.set.level(user=user, guild=guild, amount=lvl)
 
             background_image = load_image(config['level_up_background'])
