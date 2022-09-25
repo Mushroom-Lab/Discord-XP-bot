@@ -31,15 +31,24 @@ async def xp(user: discord.Member = None, guild: discord.Guild = None):
             if user is None:
                 return "User Not Found!"
             return member['xp']
-        elif config['Database_Type'].lower() == "local":
-            db = sqlite3.connect("KumosLab/Database/Local/userbase.sqlite")
-            cursor = db.cursor()
-            cursor.execute("SELECT xp FROM levelling WHERE user_id = ? AND guild_id = ?", (user.id, guild.id))
-            result = cursor.fetchone()
-            if result is None:
+
+    except Exception as e:
+        print("Error in 'KumosLab/Database/get.py' - " + str(e))
+        return
+
+async def popularity(user: discord.Member = None, guild: discord.Guild = None):
+    if user is None:
+        print("Error in 'KumosLab/Database/get.py' - User is None for 'xp'")
+        return
+    if guild is None:
+        print("Error in 'KumosLab/Database/get.py' - Guild is None for 'xp'")
+        return
+    try:
+        if config['Database_Type'].lower() == "mongodb":
+            member = levelling.find_one({'user_id': user.id, 'guild_id': guild.id})
+            if user is None:
                 return "User Not Found!"
-            cursor.close()
-            return result[0]
+            return member['popularity']
 
     except Exception as e:
         print("Error in 'KumosLab/Database/get.py' - " + str(e))
@@ -158,6 +167,25 @@ async def blur(user: discord.Member = None, guild: discord.Guild = None):
         return
 
 
+async def p_level(user: discord.Member = None, guild: discord.Guild = None):
+    if user is None:
+        print("Error in 'KumosLab/Database/get.py' - User is None for 'level'")
+        return
+    if guild is None:
+        print("Error in 'KumosLab/Database/get.py' - Guild is None for 'level'")
+        return
+    try:
+        if config['Database_Type'].lower() == "mongodb":
+            member = levelling.find_one({'user_id': user.id, 'guild_id': guild.id})
+            if member is None:
+                print("User Not Found!")
+                return
+            return member['popularityLevel']
+
+    except Exception as e:
+        print("Error in 'KumosLab/Database/get.py' - " + str(e))
+        return
+    
 async def level(user: discord.Member = None, guild: discord.Guild = None):
     if user is None:
         print("Error in 'KumosLab/Database/get.py' - User is None for 'level'")
@@ -172,16 +200,7 @@ async def level(user: discord.Member = None, guild: discord.Guild = None):
                 print("User Not Found!")
                 return
             return member['level']
-        elif config['Database_Type'].lower() == "local":
-            db = sqlite3.connect("KumosLab/Database/Local/userbase.sqlite")
-            cursor = db.cursor()
-            cursor.execute("SELECT level FROM levelling WHERE user_id = ? AND guild_id = ?", (user.id, guild.id))
-            result = cursor.fetchone()
-            if result is None:
-                print("User Not Found!")
-                return
-            cursor.close()
-            return result[0]
+
     except Exception as e:
         print("Error in 'KumosLab/Database/get.py' - " + str(e))
         return

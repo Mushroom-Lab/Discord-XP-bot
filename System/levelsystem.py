@@ -45,26 +45,31 @@ class levelsys(commands.Cog):
         
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, ctx):
+        print(ctx, "On reaction")
         event_type = ctx.event_type
         event_id = ctx.message_id
         user_id = ctx.user_id
         if event_type == 'REACTION_ADD':
-            preReaction = await levelling.find_one({"message_id": event_id, user_id: {"$exists": True}})
+            preReaction = levelling.find_one({"message_id": event_id, str(user_id): {"$exists": True}})
             if preReaction is None:
                 #add a field
-                addone = await levelling.update_one({"message_id": event_id}, {"$set": {user_id: 1}})
+                addone = levelling.update_one({"message_id": event_id}, {"$set": {str(user_id): 1}})
                 #add popularity
-                findMessage = await levelling.find_one({"message_id": event_id})
-                levelling.update_one({"user_id": findMessage.author, "guild_id": findMessage.guild_id}, {"$inc": {'popularity' + 1}} )
+                findMessage = levelling.find_one({"message_id": event_id})
+                levelling.update_one({"user_id": findMessage["author"], "guild_id": findMessage["guild_id"]}, {"$inc": {'popularity': + 200}} )
             else:
-                plus_one = preaction = await levelling.update_one({"message_id": event_id, user_id: {"$exists": True}}, {"$inc" : { user_id: + 1}})
+                findMessage = levelling.find_one({"message_id": event_id})
+                levelling.update_one({"user_id": findMessage["author"], "guild_id": findMessage["guild_id"]}, {"$inc": {'popularity': + 200}} )
+                levelling.update_one({"message_id": event_id, str(user_id): {"$exists": True}}, {"$inc" : { str(user_id): + 1}})
         elif event_type == 'REACTION_REMOVE':
-            findMessage = await levelling.find_one({"message_id": event_id, user_id: {"$exists": True}})
+            # ！！！REACTION_REMOVE 好像不会被触发，你可以试一下
+            findMessage = levelling.find_one({"message_id": event_id, user_id: {"$exists": True}})
             # case as the last emoji from this supporter, minus popularity
-            if findMessage.user_id == 1:
-                levelling.update_one({"user_id": findMessage.author, "guild_id": findMessage.guild_id}, {"$inc": {'popularity' - 1}} )
+            if findMessage["user_id"] == 1:
+                levelling.update_one({"user_id": findMessage["author"], "guild_id": findMessage["guild_id"]}, {"$inc": {'popularity': - 1}} )
+                # remove "user_id" from this message
             # minus the emoji count    
-            await levelling.update_one({"message_id": event_id}, {"user_id" - 1 })
+            levelling.update_one({"message_id": event_id}, {"user_id": - 1 })
         else:
             pass
         
@@ -80,7 +85,7 @@ class levelsys(commands.Cog):
                 if user_check == "User Not Found!":
                     await KumosLab.Database.insert.userField(member=ctx.author, guild=ctx.guild)
             # @TODO write message func
-            insert_message = await KumosLab.Database.insert.message(message_id=ctx.id, user_id=ctx.author.user_id, guild_id=ctx.guild_id)
+            await KumosLab.Database.insert.message(message_id=ctx.id, author=ctx.author.id, guild_id=ctx.guild.id)
             # filter for MESSAGE_REACTION_ADD
             
             if config['XP_Chance'] is True:
@@ -173,19 +178,25 @@ class levelsys(commands.Cog):
     @commands.Cog.listener()
     async def on_member_join(self, member):
         def get_from_ceramic(user_id, guild_id):
-            url = 'http://{}:{}'.format(CERAMIC_BE, CERAMIC_BE_PORT)
+            
+            url = 'https://{}:{}'.format(CERAMIC_BE, CERAMIC_BE_PORT)
             endpoint = '/ceramic/get_profile'
             data = {'guild_id': guild_id, "user_id": user_id }
+            print(url+endpoint, data, "XXXXXX")
             r = requests.get(url+endpoint, params=data)
+            print(r.json(), "SSSSSS")
             return r.json()
         xp_per_level = config['xp_per_level']
         level = get_from_ceramic(member.id, member.guild.id)
         if level['status'] == 1:
-            xp = 0
+            popularity_lvl = 0
+            lvl = 0
         elif level['status'] == 0:
-            level = int(level['profile']['level'])
-        xp = sum([i for i in range(level)]) * xp_per_level
-        await KumosLab.Database.insert.userFieldSync(member=member, guild=member.guild, xp=xp, level=level)
+            lvl = int(level['profile']['level'])
+            popularity_lvl = int(level['profile']['popularityLevel'])
+        xp = sum([i for i in range(lvl)]) * xp_per_level
+        popularity = sum([i for i in range(popularity_lvl)]) * xp_per_level
+        await KumosLab.Database.insert.userFieldSync(member=member, guild=member.guild, xp=xp, level=lvl, popularity=popularity, popularity_level=popularity_lvl)
         
 
     # on member leave

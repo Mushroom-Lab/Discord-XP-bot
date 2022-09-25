@@ -88,6 +88,42 @@ async def level(user: discord.Member = None, guild: discord.Guild = None, amount
         print("Error in 'KumosLab/Database/set.py' - " + str(e))
         return
 
+async def popularity_level(user: discord.Member = None, guild: discord.Guild = None, amount=None):
+    if user is None:
+        print("Error in 'KumosLab/Database/set.py' - User is None for 'popularity_level'")
+        return
+    if guild is None:
+        print("Error in 'KumosLab/Database/set.py' - Guild is None for 'popularity_level'")
+        return
+    if amount is None:
+        print("Error in 'KumosLab/Database/set.py' - Amount is None for 'popularity_level'")
+        return
+    try:
+        if config['Database_Type'].lower() == "mongodb":
+            member = levelling.find_one({'user_id': user.id, 'guild_id': guild.id})
+            if member is None:
+                print("User Not Found!")
+                return
+            # add popularity_level
+            levelling.update_one({'user_id': user.id, 'guild_id': guild.id}, {'$set': {'popularityLevel': amount}})
+            return
+        elif config['Database_Type'].lower() == "local":
+            db = sqlite3.connect("KumosLab/Database/Local/userbase.sqlite")
+            cursor = db.cursor()
+            cursor.execute("SELECT popularityLevel FROM levelling WHERE user_id = ? AND guild_id = ?", (user.id, guild.id))
+            result = cursor.fetchone()
+            if result is None:
+                print("User Not Found!")
+                return
+            # add level
+            cursor.execute("UPDATE levelling SET popularityLevel = ? WHERE user_id = ? AND guild_id = ?", (amount, user.id, guild.id))
+            db.commit()
+            cursor.close()
+            return
+    except Exception as e:
+        print("Error in 'KumosLab/Database/set.py' - " + str(e))
+        return
+
 async def background(user: discord.Member = None, guild: discord.Guild = None, link=None):
     if user is None:
         print("Error in 'KumosLab/Database/set.py' - User is None for 'background'")

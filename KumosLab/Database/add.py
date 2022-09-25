@@ -25,6 +25,35 @@ if config['Database_Type'].lower() == 'mongodb':
 async def verifyGuild(user, guild):
     levelling.update_one({'user_id': user.id, 'guild_id': guild.id}, {'$set': {'verifyGuild': guild.id}})
     return
+
+async def popularity(user: discord.Member = None, guild: discord.Guild = None, amount=None):
+    if user is None:
+        print("Error in 'KumosLab/Database/add.py' - User is None for 'xp'")
+        return
+    if guild is None:
+        print("Error in 'KumosLab/Database/add.py' - Guild is None for 'xp'")
+        return
+    if amount is None:
+        print("Error in 'KumosLab/Database/add.py' - Amount is None for 'xp'")
+        return
+    try:
+        if config['Database_Type'].lower() == "mongodb":
+            user_find = levelling.find_one({'user_id': user.id, 'guild_id': guild.id})
+            if user_find is None:
+                print("User Not Found!")
+                return
+            # add xp
+            levelling.update_one({'user_id': user.id, 'guild_id': guild.id}, {'$inc': {'popularity': + amount}})
+            return
+            # add xp
+            cursor.execute("UPDATE levelling SET xp = xp + ? WHERE user_id = ? AND guild_id = ?", (amount, user.id, guild.id))
+            db.commit()
+            cursor.close()
+            return
+    except Exception as e:
+        print("Error in 'KumosLab/Database/add.py' - " + str(e))
+        return
+    
 async def xp(user: discord.Member = None, guild: discord.Guild = None, amount=None):
     if user is None:
         print("Error in 'KumosLab/Database/add.py' - User is None for 'xp'")
@@ -44,14 +73,6 @@ async def xp(user: discord.Member = None, guild: discord.Guild = None, amount=No
             # add xp
             levelling.update_one({'user_id': user.id, 'guild_id': guild.id}, {'$inc': {'xp': + amount}})
             return
-        elif config['Database_Type'].lower() == "local":
-            db = sqlite3.connect("KumosLab/Database/Local/userbase.sqlite")
-            cursor = db.cursor()
-            cursor.execute("SELECT xp FROM levelling WHERE user_id = ? AND guild_id = ?", (user.id, guild.id))
-            result = cursor.fetchone()
-            if result is None:
-                print("User Not Found!")
-                return
             # add xp
             cursor.execute("UPDATE levelling SET xp = xp + ? WHERE user_id = ? AND guild_id = ?", (amount, user.id, guild.id))
             db.commit()

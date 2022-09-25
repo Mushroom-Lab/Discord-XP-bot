@@ -22,11 +22,11 @@ CERAMIC_BE_PORT = os.getenv("CERAMIC_BE_PORT")
 with open("Configs/config.yml", "r", encoding="utf-8") as file:
     config = yaml.load(file)
 
-def ceramic_write(user_id, guild_id, level):
-    url = 'http://{}:{}'.format(CERAMIC_BE, CERAMIC_BE_PORT)
+def ceramic_write(user_id, guild_id, level, popularity_level, dm_content):
+    url = 'https://{}:{}'.format(CERAMIC_BE, CERAMIC_BE_PORT)
     endpoint = '/ceramic/write_profile'
-    data = {'guild_id': guild_id, "user_id": user_id }
-    r = requests.post(url+endpoint, data=json.dumps(data))
+    data = {'guild_id': str(guild_id), "user_id": (user_id), "level": str(level), "popularity_level": str(popularity_level), "dm_content": dm_content}
+    r = requests.post(url+endpoint, data=json.dumps(data), headers={'Content-type': 'application/json'})
     return r.json()
     
 def translate(num):
@@ -47,7 +47,9 @@ async def levelUp(user: discord.Member = None, guild: discord.Guild = None):
 
     try:
         user_xp = await KumosLab.Database.get.xp(user=user, guild=guild)
+        popularity = await KumosLab.Database.get.popularity(user=user, guild=guild)
         lvl = 0
+        p_lvl = 0
 
         while True:
             if user_xp < ((config['xp_per_level'] / 2 * (lvl ** 2)) + (config['xp_per_level'] / 2 * lvl)):
@@ -55,10 +57,18 @@ async def levelUp(user: discord.Member = None, guild: discord.Guild = None):
             lvl += 1
         user_xp -= ((config['xp_per_level'] / 2 * ((lvl - 1) ** 2)) + (config['xp_per_level'] / 2 * (lvl - 1)))
         
-        if await KumosLab.Database.get.level(user=user, guild=guild) != lvl:
+        while True:
+            if popularity < ((config['xp_per_level'] / 2 * (p_lvl ** 2)) + (config['xp_per_level'] / 2 * p_lvl)):
+                break
+            p_lvl += 1
+        popularity -= ((config['xp_per_level'] / 2 * ((p_lvl - 1) ** 2)) + (config['xp_per_level'] / 2 * (p_lvl - 1)))
+        
+        if await KumosLab.Database.get.level(user=user, guild=guild) != lvl or await KumosLab.Database.get.p_level(user=user, guild=guild) != p_lvl:
             # levelup logic
-            ceramic_write(user.id, guild.id, lvl)
+            dm_content = "Level up! Your profile has been synced."
+            ceramic_write(str(user.id), str(guild.id), str(lvl), str(p_lvl), dm_content)
             await KumosLab.Database.set.level(user=user, guild=guild, amount=lvl)
+            await KumosLab.Database.set.popularity_level(user=user, guild=guild, amount=p_lvl)
 
             background_image = load_image(config['level_up_background'])
             background = Editor(background_image).resize((900, 270)).blur(amount=config['level_up_blur'])

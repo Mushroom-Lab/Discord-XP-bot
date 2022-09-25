@@ -18,6 +18,29 @@ class Extras(commands.Cog):
     async def on_ready(self):
         print("[Extras Addon] Addon Started - Add or Remove XP from users!")
 
+
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def addpopularity(self, ctx, user: discord.Member = None, xp: int = None):
+        if user is None:
+            embed = discord.Embed(description="🔴 **ERROR**: `No user specified`")
+            await ctx.reply(embed=embed)
+            return
+        if xp is None or xp <= 0:
+            embed = discord.Embed(description="🔴 **ERROR**: `No amount specified`")
+            await ctx.reply(embed=embed)
+            return
+        try:
+            await KumosLab.Database.add.popularity(user=user, guild=ctx.guild, amount=xp)
+            await KumosLab.Database.check.levelUp(user=user, guild=ctx.guild)
+            embed = discord.Embed(description=f"🟢 **SUCCESS**: `Added {xp} popularity to {user}`")
+            await ctx.reply(embed=embed)
+        
+
+        except Exception as e:
+            print(f"[Extras Addon] {e}")
+
+
     @commands.command()
     @commands.has_permissions(administrator=True)
     async def addxp(self, ctx, user: discord.Member = None, xp: int = None):

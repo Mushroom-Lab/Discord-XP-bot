@@ -28,6 +28,8 @@ async def generate(user: discord.Member = None, guild: discord.Guild = None):
         user_ranking = await KumosLab.Database.get.rankings(user=user, guild=guild)
         lvl = await KumosLab.Database.get.level(user=user, guild=guild)
         xp = await KumosLab.Database.get.xp(user=user, guild=guild)
+        p_lvl = await KumosLab.Database.get.p_level(user=user, guild=guild)
+        popularity = await KumosLab.Database.get.popularity(user=user, guild=guild)
 
         lvl = 0
         rank = 0
@@ -36,11 +38,22 @@ async def generate(user: discord.Member = None, guild: discord.Guild = None):
                 break
             lvl += 1
         xp -= ((config['xp_per_level'] / 2 * (lvl - 1) ** 2) + (config['xp_per_level'] / 2 * (lvl - 1)))
+        
+        while True:
+            if popularity < ((config['xp_per_level'] / 2 * (p_lvl ** 2)) + (config['xp_per_level'] / 2 * p_lvl)):
+                break
+            p_lvl += 1
+        popularity -= ((config['xp_per_level'] / 2 * ((p_lvl - 1) ** 2)) + (config['xp_per_level'] / 2 * (p_lvl - 1)))
+
 
         embed = discord.Embed(title=f"👤 {user}' Rank Card")
+        print("======user.avatar_url", user.avatar_url)
+        print("======lvl", lvl)
+        print("======p_lvl", p_lvl)
         embed.set_thumbnail(url=user.avatar_url)
         embed.add_field(name="Level:", value=f"{lvl:,}")
-        embed.add_field(name="Rank:", value=f"{user_ranking:,}")
+        embed.add_field(name="Popularity Level:", value=f"{p_lvl:,}")
+        # embed.add_field(name="Rank:", value=f"{user_ranking:,}")
 
         dashes = 10
         max_level = int(config['xp_per_level'] * 2 * ((1 / 2) * lvl))

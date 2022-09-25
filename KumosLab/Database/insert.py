@@ -24,9 +24,9 @@ async def userField(member: discord.Member, guild: discord.Guild):
             {"guild_id": guild.id, "user_id": member.id, "name": str(member), "level": 1, "xp": 0,
              "background": config['Default_Background'], "xp_colour": config['Default_XP_Colour'], "blur": 0,
              "border": config['Default_Border']})
-async def userFieldSync(member: discord.Member, guild: discord.Guild, xp, level):
+async def userFieldSync(member: discord.Member, guild: discord.Guild, xp, level, popularity, popularity_level):
     levelling.insert_one(
-            {"guild_id": guild.id, "user_id": member.id, "name": str(member), "level": level, "xp": xp,
+            {"popularity": popularity, "popularityLevel": popularity_level, "guild_id": guild.id, "user_id": member.id, "name": str(member), "level": level, "xp": xp,
              "background": config['Default_Background'], "xp_colour": config['Default_XP_Colour'], "blur": 0,
              "border": config['Default_Border']})
    
