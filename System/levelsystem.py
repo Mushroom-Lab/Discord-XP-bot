@@ -56,10 +56,10 @@ class levelsys(commands.Cog):
                 addone = levelling.update_one({"message_id": event_id}, {"$set": {str(user_id): 1}})
                 #add popularity
                 findMessage = levelling.find_one({"message_id": event_id})
-                levelling.update_one({"user_id": findMessage["author"], "guild_id": findMessage["guild_id"]}, {"$inc": {'popularity': + 200}} )
+                levelling.update_one({"user_id": findMessage["author"], "guild_id": findMessage["guild_id"]}, {"$inc": {'popularity': + 100}} )
             else:
                 findMessage = levelling.find_one({"message_id": event_id})
-                levelling.update_one({"user_id": findMessage["author"], "guild_id": findMessage["guild_id"]}, {"$inc": {'popularity': + 200}} )
+                levelling.update_one({"user_id": findMessage["author"], "guild_id": findMessage["guild_id"]}, {"$inc": {'popularity': + 100}} )
                 levelling.update_one({"message_id": event_id, str(user_id): {"$exists": True}}, {"$inc" : { str(user_id): + 1}})
         elif event_type == 'REACTION_REMOVE':
             # ！！！REACTION_REMOVE 好像不会被触发，你可以试一下

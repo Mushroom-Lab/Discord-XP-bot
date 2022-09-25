@@ -63,7 +63,8 @@ async def levelUp(user: discord.Member = None, guild: discord.Guild = None):
             p_lvl += 1
         popularity -= ((config['xp_per_level'] / 2 * ((p_lvl - 1) ** 2)) + (config['xp_per_level'] / 2 * (p_lvl - 1)))
         
-        if await KumosLab.Database.get.level(user=user, guild=guild) != lvl or await KumosLab.Database.get.p_level(user=user, guild=guild) != p_lvl:
+        # if await KumosLab.Database.get.level(user=user, guild=guild) != lvl or await KumosLab.Database.get.p_level(user=user, guild=guild) != p_lvl:
+        if await KumosLab.Database.get.p_level(user=user, guild=guild) != p_lvl:
             # levelup logic
             dm_content = "Level up! Your profile has been synced."
             ceramic_write(str(user.id), str(guild.id), str(lvl), str(p_lvl), dm_content)
